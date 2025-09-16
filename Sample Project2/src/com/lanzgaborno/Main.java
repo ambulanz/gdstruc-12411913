@@ -15,5 +15,7 @@ public class Main {
     String name = scanner.nextLine();
 
     System.out.println("Hello " + name + "! Welcome to GDSTRUC!");
+
+    // This is here to test the change feature of Git Bash!
     }
 }
