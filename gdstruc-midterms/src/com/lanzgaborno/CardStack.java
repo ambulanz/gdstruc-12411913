@@ -1,40 +1,65 @@
 package com.lanzgaborno;
 
-import java.util.LinkedList;
+import java.util.NoSuchElementException;
 
 public class CardStack {
-    private LinkedList<Card> stack; // holds t Card objects
-    private String stackName; //names of discard and draw piles
+    private Card[] stack;
+    private int top;
+    private String stackName;
 
     public CardStack(String stackName) {
-        this.stack = new LinkedList<Card>();
+        this.stack = new Card[10];
+        this.top = 0;
         this.stackName = stackName;
     }
 
+    // Push card to top of stack
     public void push(Card card) {
-        stack.push(card);
+        if (top == stack.length) {
+            resize();
+        }
+
+        stack[top] = card;
+        top++;
     }
 
     public Card pop() {
+
         if (isEmpty()) {
-            return null;
+            throw new NoSuchElementException();
         }
-        return stack.pop();
+
+        top--;
+        Card card = stack[top];
+        stack[top] = null;
+        return card;
     }
 
     public Card peek() {
+
         if (isEmpty()) {
-            return null;
+            throw new NoSuchElementException("Stack is empty!");
         }
-        return stack.peek();
+
+        return stack[top - 1];
     }
 
     public boolean isEmpty() {
-        return stack.isEmpty();
+        return top == 0;
     }
 
     public int size() {
-        return stack.size();
+        return top;
+    }
+
+    private void resize() {
+        Card[] newStack = new Card[stack.length * 2];
+
+        for (int i = 0; i < stack.length; i++) {
+            newStack[i] = stack[i];
+        }
+
+        stack = newStack;
     }
 
     public void printStack() {
@@ -44,8 +69,8 @@ public class CardStack {
         }
 
         System.out.println(stackName + ":");
-        for (int i = 0; i < stack.size(); i++) {
-            System.out.println("  " + (i + 1) + ". " + stack.get(i));
+        for (int i = top - 1; i >= 0; i--) {
+            System.out.println("  " + (top - i) + ". " + stack[i]);
         }
     }
 

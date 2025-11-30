@@ -2,16 +2,17 @@ package com.lanzgaborno;
 
 import java.util.Random;
 import java.util.Scanner;
-import java.util.LinkedList;
 
 public class Main {
     private CardStack playerDeck;
     private CardStack discardPile;
-    private LinkedList<Card> playerHand;
+    private Card[] playerHand;      // Array for player's hand
+    private int handSize;           // Track how many cards in hand
     private Random random;
     private Scanner scanner;
     private int turnNumber;
 
+    // Card names for the 30-card deck
     private static final String[] CARD_NAMES = {
             "Flare Blitz", "Icicle Spear", "Volt Tackle", "Wish",
             "Protect", "Hydro Pump", "Toxic", "Aerial Ace",
@@ -21,7 +22,8 @@ public class Main {
     public Main() {
         playerDeck = new CardStack("Player Deck");
         discardPile = new CardStack("Discard Pile");
-        playerHand = new LinkedList<Card>();
+        playerHand = new Card[20];  // Max 20 cards in hand
+        handSize = 0;
         random = new Random();
         scanner = new Scanner(System.in);
         turnNumber = 1;
@@ -30,9 +32,10 @@ public class Main {
     }
 
     private void initializeDeck() {
-        System.out.println("generating cards...\n");
+        System.out.println("generating 30 cards...\n");
 
         for (int i = 0; i < 30; i++) {
+            // Pick a random card name
             String cardName = CARD_NAMES[random.nextInt(CARD_NAMES.length)];
             Card card = new Card(cardName);
             playerDeck.push(card);
@@ -57,7 +60,7 @@ public class Main {
 
     private void drawCards() {
         int numCards = random.nextInt(5) + 1; // 1 to 5
-        System.out.println("->SELECTED COMMAND: Draw " + numCards + " card(s)");
+        System.out.println(">>> COMMAND: Draw " + numCards + " card(s)");
 
         int drawn = 0;
         for (int i = 0; i < numCards; i++) {
@@ -66,8 +69,14 @@ public class Main {
                 break;
             }
 
+            if (handSize >= playerHand.length) {
+                System.out.println("  ! Hand is full, cannot draw more cards!");
+                break;
+            }
+
             Card card = playerDeck.pop();
-            playerHand.add(card);
+            playerHand[handSize] = card;
+            handSize++;
             drawn++;
             System.out.println("  + Drew: " + card);
         }
@@ -77,25 +86,35 @@ public class Main {
         }
     }
 
+    // Discard x cards from hand
     private void discardCards() {
-        if (playerHand.isEmpty()) {
-            System.out.println("->SELECTED COMMAND: Discard cards");
+        if (handSize == 0) {
+            System.out.println("->COMMAND: Discard cards");
             System.out.println("  ! No cards in hand to discard!");
             return;
         }
 
         int numCards = random.nextInt(5) + 1; // 1 to 5
-        System.out.println("->SELECTED COMMAND: Discard " + numCards + " card(s)");
+        System.out.println("->COMMAND: Discard " + numCards + " card(s)");
 
         int discarded = 0;
         for (int i = 0; i < numCards; i++) {
-            if (playerHand.isEmpty()) {
+            if (handSize == 0) {
                 System.out.println("  ! No more cards in hand to discard!");
                 break;
             }
 
-            Card card = playerHand.removeFirst();
+            // Remove from front of hand (index 0)
+            Card card = playerHand[0];
             discardPile.push(card);
+
+            // Shift all cards left
+            for (int j = 0; j < handSize - 1; j++) {
+                playerHand[j] = playerHand[j + 1];
+            }
+            playerHand[handSize - 1] = null;
+            handSize--;
+
             discarded++;
             System.out.println("  - Discarded: " + card);
         }
@@ -105,15 +124,16 @@ public class Main {
         }
     }
 
+    // Retrieve x cards from discard pile
     private void retrieveFromDiscard() {
         if (discardPile.isEmpty()) {
-            System.out.println("->SELECTED COMMAND: Retrieve from discard pile");
+            System.out.println("->COMMAND: Retrieve from discard pile");
             System.out.println("  ! Discard pile is empty!");
             return;
         }
 
         int numCards = random.nextInt(5) + 1; // 1 to 5
-        System.out.println("->SELECTED COMMAND: Retrieve " + numCards + " card(s) from discard pile");
+        System.out.println("->COMMAND: Retrieve " + numCards + " card(s) from discard pile");
 
         int retrieved = 0;
         for (int i = 0; i < numCards; i++) {
@@ -122,8 +142,14 @@ public class Main {
                 break;
             }
 
+            if (handSize >= playerHand.length) {
+                System.out.println("  ! Hand is full, cannot retrieve more cards!");
+                break;
+            }
+
             Card card = discardPile.pop();
-            playerHand.add(card);
+            playerHand[handSize] = card;
+            handSize++;
             retrieved++;
             System.out.println("  + Retrieved: " + card);
         }
@@ -133,18 +159,19 @@ public class Main {
         }
     }
 
+    // Display game state
     private void displayGameState() {
         System.out.println("\n========================================");
-        System.out.println("CURRENT GAME STATE");
+        System.out.println("             GAME STATE"                  );
         System.out.println("========================================");
 
         // Player's hand
-        System.out.println("\nCards in Hand (" + playerHand.size() + "):");
-        if (playerHand.isEmpty()) {
+        System.out.println("\nCards in Hand (" + handSize + "):");
+        if (handSize == 0) {
             System.out.println("  (empty)");
         } else {
-            for (int i = 0; i < playerHand.size(); i++) {
-                System.out.println("  " + (i + 1) + ". " + playerHand.get(i));
+            for (int i = 0; i < handSize; i++) {
+                System.out.println("  " + (i + 1) + ". " + playerHand[i]);
             }
         }
 
@@ -157,6 +184,7 @@ public class Main {
         System.out.println("========================================\n");
     }
 
+    // Check if game is over
     private boolean isGameOver() {
         return playerDeck.isEmpty();
     }
@@ -164,7 +192,7 @@ public class Main {
     // Main game loop
     public void play() {
         System.out.println("=========================================");
-        System.out.println("         DEFINITELY POKEMON TCG          ");
+        System.out.println("        DEFINITELY NOT POKEMON TCG       ");
         System.out.println("=========================================");
         System.out.println("Press ENTER to start...");
         scanner.nextLine();
@@ -189,10 +217,10 @@ public class Main {
         }
 
         System.out.println("\n=========================================");
-        System.out.println("              GAME OVER!");
+        System.out.println("                GAME OVER!"                );
         System.out.println("=========================================");
         System.out.println("Total turns played: " + turnNumber);
-        System.out.println("Final hand size: " + playerHand.size());
+        System.out.println("Final hand size: " + handSize);
         System.out.println("Cards in discard pile: " + discardPile.size());
         System.out.println("\nYou are the Pokemon Champion!");
 
